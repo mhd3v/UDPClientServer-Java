@@ -13,17 +13,68 @@ public class UDPClient {
 		
 		Scanner sp = new Scanner(System.in);
 		
-		String clientMessage = sp.next();
+		//boolean acknowledged = false;
 		
-		byte[] clientMessageInBytes = clientMessage.getBytes();
+		boolean nak, acknowledged = false;
+			
+		for(int i = 0; i < 10; i++) {
+			
+			acknowledged =false;
+			nak = false;
+			
+			String clientMessage = "";
+			byte[] clientMessageInBytes = new byte[1024];
+			
+			//boolean acknowledged = false;
+			
+			while(!acknowledged) { //keep running until packet successfully transmitted
+				
+				if(nak != true) { //if NAK was received don't take input again
+					
+					System.out.println("Enter data for packet: " + i);
+					
+					clientMessage = sp.next();
+					
+					clientMessage = clientMessage + "@@" + Integer.toString(i);
+					
+					clientMessageInBytes = clientMessage.getBytes();
+				}
+				
+				//send packet
+				DatagramPacket sendPacket = new DatagramPacket(clientMessageInBytes, clientMessageInBytes.length, IPAddress, 9876);
+				clientSocket.send(sendPacket);
+				System.out.println("Packet sent!");
+				
+				//receive response
+				byte[] responsePacketInBytes = new byte[1024];
+				DatagramPacket responsePacket = new DatagramPacket(responsePacketInBytes, responsePacketInBytes.length);
+				clientSocket.receive(responsePacket);
+				
+				String responsePacketInString = new String(responsePacket.getData());
+				
+				if(responsePacketInString.trim().equals("ACK")) {
+					System.out.println("ACK Recieved for packet no." + i + ", sending next packet!");
+					acknowledged = true;
+				}
+				
+				if(responsePacketInString.trim().equals("NAK")) {
+					System.out.println("NAK Recieved for packet no." + i + ", sending packet again!");
+					nak = true;
+				}
+					
+				
+			}
+			
+			System.out.println("=======");
+			
+			
+			
+			
+		}
 		
-		DatagramPacket sendPacket = new DatagramPacket(clientMessageInBytes, clientMessageInBytes.length, IPAddress, 9876);
-		
-		clientSocket.send(sendPacket);
-		 
 		clientSocket.close();
+		
 
 	}
 
 }
-

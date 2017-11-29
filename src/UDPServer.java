@@ -7,8 +7,13 @@ class UDPServer {
 		
 		DatagramSocket serverSocket = new DatagramSocket(9876);
 		
-
+		int expectedSeqNo = 0;
+		
+		
 		while (true) {
+			
+			int randomNumber = (int) (Math.random()*20);
+			System.out.println("random number: " + randomNumber);
 			
 			byte[] receiveBytes = new byte[1024];
 			byte[] responseBytes = new byte[1024];
@@ -17,15 +22,48 @@ class UDPServer {
 
 			serverSocket.receive(recievedPacket);
 
-			System.out.println(new String(recievedPacket.getData()));
+			String packetInString = new String(recievedPacket.getData());
+			
+			//System.out.println(packetInString);
+			
+			if(randomNumber > 10)
+			{
+				for(int i=0; i< packetInString.length(); i++) {
+					
+					if(packetInString.contains("@@"+Integer.toString(expectedSeqNo)) ){
+						
+						System.out.println(packetInString);
+						
+						expectedSeqNo++;
+						
+						responseBytes = "ACK".getBytes();
 
-			responseBytes = "Your data was recieved!".getBytes();
+						DatagramPacket responsePacket = new DatagramPacket(responseBytes, responseBytes.length,
+								recievedPacket.getAddress(), recievedPacket.getPort());
 
-			DatagramPacket responsePacket = new DatagramPacket(responseBytes, responseBytes.length,
-					recievedPacket.getAddress(), recievedPacket.getPort());
+						serverSocket.send(responsePacket);
+						
+						break;
+						
+					}
+				}
+			
+			}
+			
+			else {
+				System.out.println("Corrupt packet recieved!");
+				
+				responseBytes = "NAK".getBytes();
 
-			serverSocket.send(responsePacket);
+				DatagramPacket responsePacket = new DatagramPacket(responseBytes, responseBytes.length,
+						recievedPacket.getAddress(), recievedPacket.getPort());
 
+				serverSocket.send(responsePacket);
+
+				
+			}
+
+			
 		}
 	}
 }
